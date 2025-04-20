@@ -1,14 +1,16 @@
 export class FarmTechnology {
-    level: number;
-    upgradeCost: number;
+    public level: number;
+    public upgradeCost: number;
+    public multiply: number;
 
-    constructor(level: number = 1) {
+    constructor(level: number, cost: number, multiply: number) {
         this.level = level;
-        this.upgradeCost = 500;
+        this.upgradeCost = cost;
+        this.multiply = multiply;
     }
 
     getProductionMultiplier(): number {
-        return 1 + this.level * 0.1;
+        return 1 + this.level * this.multiply;
     }
 
     upgrade(): void {

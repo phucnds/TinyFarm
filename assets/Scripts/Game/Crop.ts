@@ -1,48 +1,31 @@
-import { PlantableConfig, ItemType } from "./Enums";
+import { PlantableConfig, ItemType, CropSaveData, getPlantableConfig } from "./Enums";
 
 export class Crop {
-    // --- Properties ---
-    private config: PlantableConfig;
-    private currentYield: number;
+    private currentYield = 0;
+    private producedItemCount = 0;
     private timeToNextHarvest: number;
-    private canHarvest: boolean;
 
-    private producedItemCount: number;
-    private decayTimerSeconds: number;
-
-    constructor(config: PlantableConfig) {
-        if (!config) {
-            throw new Error("Config null.");
-        }
-        this.config = config;
-        this.currentYield = 0;
-        this.producedItemCount = 0;
+    constructor(private config: PlantableConfig) {
+        if (!config) throw new Error("Config null.");
         this.timeToNextHarvest = config.harvestInterval;
-        this.canHarvest = false;
     }
 
     public update(deltaTimeMinutes: number): boolean {
-
         this.timeToNextHarvest -= deltaTimeMinutes;
-
         if (this.timeToNextHarvest < 0) {
             this.timeToNextHarvest = 0;
             this.produce();
-
             return true;
         }
-
         return false;
     }
 
     private produce(): void {
         this.currentYield++;
         this.producedItemCount++;
-        if (this.currentYield >= this.config.maxYield)
-            this.canHarvest = true;
     }
 
-    public harvest(){
+    public harvest(): number {
         const amount = this.producedItemCount;
         this.producedItemCount = 0;
         return amount;
@@ -68,7 +51,27 @@ export class Crop {
         return this.currentYield >= this.config.maxYield;
     }
 
-    public get ProducedItemCount() {
+    public get ProducedItemCount(): number {
         return this.producedItemCount;
+    }
+
+    public saveData(): CropSaveData {
+        return {
+            itemType: this.config.itemType,
+            currentYield: this.currentYield,
+            producedItemCount: this.producedItemCount,
+            timeToNextHarvest: this.timeToNextHarvest,
+            lastTimeSince: Date.now()
+        }
+    }
+
+    public loadData(data: CropSaveData) {
+        this.config = getPlantableConfig(data.itemType);
+        this.currentYield = data.currentYield;
+        this.producedItemCount = data.producedItemCount;
+        this.timeToNextHarvest = data.timeToNextHarvest;
+
+        const now = Date.now();
+        console.log(now - data.lastTimeSince);
     }
 }

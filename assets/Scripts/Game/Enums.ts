@@ -1,4 +1,5 @@
 import { Vec3 } from "cc";
+import { InventoryItem } from "./InventoryItem";
 
 export enum ItemType {
 
@@ -11,11 +12,13 @@ export enum ItemType {
     Blueberry = 102,
     Strawberry = 103,
     Milk = 104,
+
+    None = 0,
 }
 
 
 export enum PlotState {
-    Locked = 10,
+    Locked = -1,
     Empty = 0,
     Growing = 1,
     HasFruit = 2,
@@ -37,14 +40,23 @@ export interface PlantableConfig {
     sellPrice?: number;
 }
 
-export const CropConfigs: { [key in ItemType]?: PlantableConfig } = {
+export interface ItemData {
+    itemTypeId: ItemType;
+    quantity: number;
+}
+
+export type CropData = {
+    [key in ItemType]?: PlantableConfig;
+}
+
+export const CropConfigs: CropData = {
     [ItemType.Tomato]: {
         itemType: ItemType.Tomato,
         seedType: ItemType.TomatoSeed,
         producedItem: ItemType.Tomato,
         harvestInterval: 3,//10 * 60,
         maxYield: 10,
-        decayTimeAfterFinalHarvest: 1 * 60 * 60,
+        decayTimeAfterFinalHarvest: 20,// * 60 * 60,
         name: "Tomato",
 
         unit: 1,
@@ -137,3 +149,17 @@ export function getShopItemConfigs(): ShopItemConfigs[] {
         }));
 }
 
+
+export interface FarmPlotSaveData {
+    currentState: number;
+    decayTimerMinutes: number;
+    plantedItem: CropSaveData;
+}
+
+export interface CropSaveData {
+    itemType: number;
+    currentYield: number;
+    producedItemCount: number;
+    timeToNextHarvest: number;
+    lastTimeSince: number;
+}

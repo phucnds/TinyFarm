@@ -24,7 +24,7 @@ export class Worker extends Component {
     private targetPosition: Vec3 = v3();
     private isMoving = false;
     private waitingTimer = 0;
-    private readonly waitingTimerMax = 5;
+    private waitingTimerMax = 5;
     private onComplete: () => void = null;
 
     onLoad() {
@@ -89,6 +89,10 @@ export class Worker extends Component {
         this.waitingTimer = this.waitingTimerMax;
         this.onComplete = onComplete;
         this.setState(CharacterState.DOING);
+    }
+
+    public setActionTime(value: number): void {
+        this.waitingTimerMax = value;
     }
 
     private setState(newState: CharacterState) {

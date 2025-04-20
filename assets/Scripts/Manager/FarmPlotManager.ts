@@ -7,22 +7,21 @@ const { ccclass, property } = _decorator;
 
 @ccclass('FarmPlotManager')
 export class FarmPlotManager extends Component {
+
     @property(Prefab) private farmplot: Prefab;
 
-    private farmPlotSetting: FarmPlotSettings;
     private farmPlots: FarmPlot[] = [];
 
-    start() {
-        this.init();
-    }
 
-    private async init(): Promise<void> {
+    public async loadFrom(data: FarmPlotSettings): Promise<void> {
 
-        this.farmPlotSetting = new FarmPlotSettings();
+        let amount: number = data.available;
+        const amountUnlock = data.startingFarmPlots;
+        const price = data.unlockCost;
 
-        const amount = this.farmPlotSetting.amount;
-        const amountUnlock = this.farmPlotSetting.startingFarmPlots;
-        const price = this.farmPlotSetting.price;
+        const dataFarmPlotCount:number = data.farmPlots.length;
+
+        if (dataFarmPlotCount > 0) amount = dataFarmPlotCount;
 
         this.farmPlots = [];
 
@@ -30,17 +29,35 @@ export class FarmPlotManager extends Component {
 
             const unlock = i < amountUnlock;
             const farmPlot = new FarmPlot(price);
+
             this.farmPlots.push(farmPlot);
 
             const farmPlotUI = instantiate(this.farmplot).getComponent(FarmPlotView);
             farmPlotUI.setup(farmPlot);
             farmPlotUI.node.setParent(this.node);
 
-            await delay(100);
-            if (!unlock) continue;
-            farmPlot.buyPlot();
 
+            await delay(100);
+            if (dataFarmPlotCount > 0)
+            {
+                
+                farmPlot.loadData(data.farmPlots[i]);
+            }
+            else
+            {
+                if (!unlock) continue;
+                farmPlot.buyPlot();
+            }
+            
         }
+    }
+    public saveTo(data: FarmPlotSettings): void {
+
+        data.farmPlots = [];
+        this.farmPlots.forEach(plot => {
+            data.farmPlots.push(plot.saveData());
+        })
+        console.log(data.farmPlots);
     }
 }
 

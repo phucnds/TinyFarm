@@ -1,14 +1,13 @@
 import { _decorator, Component, instantiate, Node, Prefab } from 'cc';
 import { CharacterState, Worker } from '../Game/Worker';
 import { CashManager } from './CashManager';
-import { UserData } from '../Data/UserData';
 import { Signal } from '../Services/EventSystem/Signal';
+import { WorkerSettings } from '../Data/GameSettings';
 
 const { ccclass, property } = _decorator;
 
 @ccclass('WorkerManager')
 export class WorkerManager extends Component {
-
     @property(Prefab) private workerPrefab: Prefab;
     @property(Node) private parentNode: Node;
     @property(Node) private startPos: Node;
@@ -18,36 +17,22 @@ export class WorkerManager extends Component {
     public static get Instance(): WorkerManager {
         return this.instance;
     }
-
     protected onLoad(): void {
         WorkerManager.instance = this;
     }
-
     public workers: Worker[] = [];
 
-    private limitWorker = 0;
     private hireCost = 500;
+    private actionTime = 120;
 
     public WorkerChangeEvent: Signal<Worker> = new Signal<Worker>();
 
-    protected start(): void {
-        this.init();
-    }
-
-    private init(): void {
-
-        const data = new UserData();
-        this.limitWorker = data.startingWorkerCount;
-
-        for (let i = 0; i < this.limitWorker; i++) {
-            this.createWorker();
-        }
-    }
 
     private createWorker(): void {
 
         const worker = instantiate(this.workerPrefab).getComponent(Worker);
         this.workers.push(worker);
+        worker.setActionTime(this.actionTime);
         worker.node.setParent(this.parentNode);
         worker.node.setPosition(this.startPos.getPosition());
 
@@ -79,7 +64,18 @@ export class WorkerManager extends Component {
         return this.workers.filter(worker => worker.getCurrentState() === CharacterState.IDLE).length;
     }
 
+    public loadFrom(data: WorkerSettings): void {
+        this.hireCost = data.hireCost;
+        this.actionTime = data.actionTime;
 
+        for (let i = 0; i < data.available; i++) {
+            this.createWorker();
+        }
+
+    }
+    public saveTo(data: WorkerSettings): void {
+        data.available = this.workers.length;
+    }
 }
 
 

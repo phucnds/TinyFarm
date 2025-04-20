@@ -1,9 +1,11 @@
 import { _decorator, Component, Node } from 'cc';
 import { FarmTechnology } from '../Game/FarmTechnology';
+import { FarmTechSettings } from '../Data/GameSettings';
 const { ccclass, property } = _decorator;
 
 @ccclass('FarmTechManager')
-export class FarmTechManager extends Component {
+export class FarmTechManager extends Component{
+
     private static instance: FarmTechManager;
 
     public static get Instance(): FarmTechManager {
@@ -15,15 +17,6 @@ export class FarmTechManager extends Component {
     }
 
     private farmTech: FarmTechnology;
-
-    protected start(): void {
-        this.init();
-    }
-
-    private init(): void {
-        this.farmTech = new FarmTechnology();
-        this.farmTech.level = 1;
-    }
 
     public getCurrentLevel(): number {
         return this.farmTech.level;
@@ -43,6 +36,16 @@ export class FarmTechManager extends Component {
 
     public getProductionMultiplier(): number {
         return this.farmTech.getProductionMultiplier();
+    }
+
+    public loadFrom(data: FarmTechSettings): void {
+        this.farmTech = new FarmTechnology(data.level, data.upgradeCost, data.productionMultiplier);
+    }
+
+    public saveTo(data: FarmTechSettings): void {
+        data.level = this.farmTech.level
+        data.upgradeCost = this.farmTech.upgradeCost
+        data.productionMultiplier = this.farmTech.multiply
     }
 }
 

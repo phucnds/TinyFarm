@@ -1,1 +1,1 @@
-{}
+{"cash":{"goldCoins":1000},"farm":{"available":8,"startingFarmPlots":3,"unlockCost":500,"farmPlots":[]},"tech":{"level":1,"productionMultiplier":0.1,"upgradeCost":500},"inventory":{},"worker":{"available":1,"hireCost":500,"actionTime":120,"workers":[]}}

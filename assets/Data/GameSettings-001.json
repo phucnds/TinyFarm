@@ -1,0 +1,87 @@
+{
+    "cash": {
+        "goldCoins": 10000
+    },
+    "farm": {
+        "available": 8,
+        "startingFarmPlots": 3,
+        "unlockCost": 500,
+        "farmPlots": []
+    },
+    "tech": {
+        "level": 1,
+        "productionMultiplier": 0.1,
+        "upgradeCost": 500
+    },
+    "inventory": {
+        "inventory": [
+            {
+                "itemTypeId": 1,
+                "quantity": 10
+            },
+            {
+                "itemTypeId": 2,
+                "quantity": 10
+            },
+            {
+                "itemTypeId": 4,
+                "quantity": 2
+            }
+        ],
+        "cropConfigs": {
+            "4": {
+                "itemType": 4,
+                "seedType": 4,
+                "producedItem": 104,
+                "harvestInterval": 1800,
+                "maxYield": 100,
+                "decayTimeAfterFinalHarvest": 3600,
+                "name": "Cow",
+                "unit": 1,
+                "seedCost": 100,
+                "sellPrice": 15
+            },
+            "101": {
+                "itemType": 101,
+                "seedType": 1,
+                "producedItem": 101,
+                "harvestInterval": 6,
+                "maxYield": 10,
+                "decayTimeAfterFinalHarvest": 3600,
+                "name": "Tomato",
+                "unit": 1,
+                "seedCost": 30,
+                "sellPrice": 5
+            },
+            "102": {
+                "itemType": 102,
+                "seedType": 2,
+                "producedItem": 102,
+                "harvestInterval": 900,
+                "maxYield": 40,
+                "decayTimeAfterFinalHarvest": 3600,
+                "name": "Blueberry",
+                "unit": 1,
+                "seedCost": 50,
+                "sellPrice": 8
+            },
+            "103": {
+                "itemType": 103,
+                "seedType": 3,
+                "producedItem": 103,
+                "harvestInterval": 300,
+                "maxYield": 20,
+                "decayTimeAfterFinalHarvest": 3600,
+                "name": "Strawberry",
+                "unit": 10,
+                "seedCost": 40,
+                "sellPrice": 10
+            }
+        }
+    },
+    "worker": {
+        "available": 1,
+        "hireCost": 500,
+        "actionTime": 5
+    }
+}

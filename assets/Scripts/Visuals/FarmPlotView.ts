@@ -17,8 +17,9 @@ const { ccclass, property } = _decorator;
 @ccclass('FarmPlotView')
 export class FarmPlotView extends Component {
     @property(Node) private workPos: Node;
-    @property(Node) private lockElement: Node;
-    @property(Node) private unlockElement: Node;
+    @property(Node) private lockedNode: Node;
+    @property(Node) private emptyNode: Node;
+    @property(Node) private growNode: Node;
     @property(Label) private lblPrice: Label;
     @property(UIButton) private btnBuy: UIButton;
     @property(UIButton) private btnAdd: UIButton;
@@ -38,8 +39,10 @@ export class FarmPlotView extends Component {
 
     private typeToPrefab = new Map<ItemType, Prefab>();
     private farmPlot: FarmPlot;
-    private cropPrefabVisual: CropPrefabVisual;
+    private cropPrefabVisual: CropPrefabVisual = null;
     private canHarvest = false;
+
+    private arrNode: Node[] = []
 
     protected start(): void {
         this.btnBuy.InteractedEvent.on(this.buyFarmPlot, this);
@@ -47,6 +50,7 @@ export class FarmPlotView extends Component {
         this.btnHarvest.InteractedEvent.on(this.harvest, this);
         this.btnClear.InteractedEvent.on(this.clear, this);
         this.mapPrefabs();
+        this.addNodetoArr();
 
     }
 
@@ -63,7 +67,6 @@ export class FarmPlotView extends Component {
         this.farmPlot = farmPlot;
         this.farmPlot.ChangeStateEvent.on(this.farmPlot_onChangeState, this);
         this.farmPlot.HasFruitEvent.on(this.hasFruitEvent, this);
-        this.farmPlot.DecayEvent.on(this.decayEvent, this);
         this.lblPrice.string = farmPlot.getCurrentPrice().toString();
         this.btnHarvest.getComponent(Button).interactable = this.canHarvest;
 
@@ -77,26 +80,62 @@ export class FarmPlotView extends Component {
         this.typeToPrefab.set(ItemType.Cow, this.prefabsCow);
     }
 
+    private addNodetoArr(): void {
+        this.arrNode.push(this.lockedNode);
+        this.arrNode.push(this.emptyNode);
+        this.arrNode.push(this.growNode);
+
+        this.showNode(this.lockedNode);
+    }
+
+    private showNode(node: Node): void {
+        this.arrNode.forEach(n => {
+            n.active = node === n;
+        })
+    }
+
     private farmPlot_UnlockEvent(): void {
-        this.lockElement.active = false;
-        this.unlockElement.active = true;
+        this.lockedNode.active = false;
+        this.emptyNode.active = true;
         this.addTaskPlant();
     }
 
     private farmPlot_onChangeState(state: PlotState): void {
         switch (state) {
+
+            case PlotState.Locked:
+                this.showNode(this.lockedNode);
+                break;
+
             case PlotState.Empty:
                 this.resetState();
+                this.showNode(this.emptyNode);
                 break;
+
             case PlotState.Growing:
-                const prefab = this.getPrefab(this.farmPlot.getPlantedItem().getConfig().itemType);
-                const crop = instantiate(prefab);
-                crop.setParent(this.field);
-                this.cropPrefabVisual = crop.getComponent(CropPrefabVisual);
+
+
+                this.showNode(this.growNode);
+                this.updateVisualPlant();
                 break;
+
             case PlotState.ReadyToHarvest:
                 this.canHarvestEvent();
+                this.showNode(this.growNode);
+                this.updateVisualPlant();
                 break;
+
+            case PlotState.HasFruit:
+                this.showNode(this.growNode);
+                this.updateVisualPlant();
+                break;
+
+            case PlotState.Decay:
+                this.showNode(this.growNode);
+                this.updateVisualPlant();
+                this.decayEvent()
+                break;
+
         }
     }
 
@@ -114,22 +153,32 @@ export class FarmPlotView extends Component {
     private resetState(): void {
         this.farmPlot_UnlockEvent();
         this.btnAdd.node.active = true;
-        this.btnHarvest.node.active = false;
         this.field.removeAllChildren();
-        this.stats.active = false;
+        this.cropPrefabVisual = null;
         this.setHarvestUI(false);
+    }
+
+    private updateVisualPlant() {
+        if (this.cropPrefabVisual === null) {
+            const prefab = this.getPrefab(this.farmPlot.getPlantedItem().getConfig().itemType);
+            const crop = instantiate(prefab);
+            crop.setParent(this.field);
+            this.cropPrefabVisual = crop.getComponent(CropPrefabVisual);
+        }
+
+        this.lblName.string = this.farmPlot.getPlantedItem().getConfig().name;
+        const idProduct = this.farmPlot.getPlantedItem().getConfig().producedItem;
+        loadItemSprite(idProduct, (spr) => this.icProduct.spriteFrame = spr);
+        const count: number = this.farmPlot.getPlantedItem().ProducedItemCount;
+        this.btnHarvest.node.active = count > 0;
+        this.lblAmount.string = count.toString();
     }
 
     private plant(id: ItemType): void {
         const inventory = InventoryManager.Instance.Inventory;
         if (!this.farmPlot.plant(id, inventory)) return;
 
-        this.btnAdd.node.active = false;
-        this.stats.active = true;
-        this.lblName.string = this.farmPlot.getPlantedItem().getConfig().name;
-
-        const idProduct = this.farmPlot.getPlantedItem().getConfig().producedItem;
-        loadItemSprite(idProduct, (spr) => this.icProduct.spriteFrame = spr);
+        this.updateVisualPlant();
     }
 
     public getPrefab(itemID: ItemType): Prefab {
@@ -201,9 +250,7 @@ export class FarmPlotView extends Component {
         await delay(100);
         if (this.node.getPosition().x > 0) {
             const locPos = this.workPos.getPosition();
-            console.log(locPos.x)
             this.workPos.setPosition(new Vec3(-locPos.x, locPos.y, locPos.z));
-            console.log(locPos.x)
         }
     }
 

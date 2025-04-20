@@ -2,10 +2,12 @@ import { _decorator, Component, Node } from 'cc';
 import { Inventory } from '../Game/Inventory';
 import { CropConfigs, ItemType, PlantableConfig, ShopItemConfigs } from '../Game/Enums';
 import { Signal } from '../Services/EventSystem/Signal';
+import { InventorySettings } from '../Data/GameSettings';
 const { ccclass, property } = _decorator;
 
 @ccclass('InventoryManager')
 export class InventoryManager extends Component {
+
 
     private static instance: InventoryManager;
 
@@ -15,22 +17,11 @@ export class InventoryManager extends Component {
 
     protected onLoad(): void {
         InventoryManager.instance = this;
+        this.inventory = new Inventory();
     }
 
     private inventory: Inventory;
     public ChangeInventoryEvent: Signal = new Signal();
-
-    protected start(): void {
-        this.setup();
-    }
-
-    private setup(): void {
-        this.inventory = new Inventory();
-
-        this.inventory.addItem(ItemType.TomatoSeed, 100);
-        // this.inventory.addItem(ItemType.BlueberrySeed, 10);
-        // this.inventory.addItem(ItemType.Cow, 2);
-    }
 
     public get Inventory() {
         return this.inventory;
@@ -43,7 +34,7 @@ export class InventoryManager extends Component {
             const itemID = parseInt(key) as ItemType;
             const crop = CropConfigs[itemID];
 
-            if (crop && crop.seedType !== undefined && this.inventory.Items.has(crop.seedType)) {
+            if (crop && crop.seedType !== undefined && this.inventory.hasItem(crop.seedType)) {
                 result.push({
                     itemID: itemID,
                     name: crop.name,
@@ -81,6 +72,13 @@ export class InventoryManager extends Component {
         }
 
         return result;
+    }
+
+    public loadFrom(data: InventorySettings): void {
+        this.inventory.setItems(data.inventory)
+    }
+    public saveTo(data: InventorySettings): void {
+        data.inventory = this.inventory.getItemDatas();
     }
 }
 

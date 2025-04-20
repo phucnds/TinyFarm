@@ -1,12 +1,14 @@
 import { _decorator, Component, Node } from 'cc';
 import { Signal } from '../Services/EventSystem/Signal';
-import { UserData } from '../Data/UserData';
 import { delay } from '../Utils/AsyncUtils';
+import { CashSettings } from '../Data/GameSettings';
 
 const { ccclass, property } = _decorator;
 
 @ccclass('CashManager')
-export class CashManager extends Component {
+export class CashManager extends Component{
+
+
 
     private static instance: CashManager;
 
@@ -23,9 +25,6 @@ export class CashManager extends Component {
     public onChangeBalance: Signal<number> = new Signal<number>();
 
     protected start(): void {
-        const userData = new UserData();
-        this.balance = userData.goldCoins;
-
         this.lateUpdates();
     }
 
@@ -51,6 +50,13 @@ export class CashManager extends Component {
 
     public hasEnoughBalance(value: number): boolean {
         return this.balance >= value;
+    }
+
+    public loadFrom(data: CashSettings): void {
+        this.addBalance(data.goldCoins);
+    }
+    public saveTo(data: CashSettings): void {
+        data.goldCoins = this.balance;
     }
 
 
