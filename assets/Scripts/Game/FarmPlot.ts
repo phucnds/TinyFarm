@@ -13,7 +13,7 @@ export class FarmPlot {
     public ChangeStateEvent = new Signal<PlotState>();
     public HasFruitEvent = new Signal();
 
-    constructor(price: number) {
+    constructor(price: number = 500) {
         this.currentPrice = price;
     }
 

@@ -52,12 +52,11 @@ export class FarmPlotManager extends Component {
         }
     }
     public saveTo(data: FarmPlotSettings): void {
-
         data.farmPlots = [];
         this.farmPlots.forEach(plot => {
             data.farmPlots.push(plot.saveData());
         })
-        console.log(data.farmPlots);
+        // console.log(data.farmPlots);
     }
 }
 

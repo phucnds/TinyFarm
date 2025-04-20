@@ -50,7 +50,6 @@ export class GameManager extends Component {
     private loadSetting(): void {
         const data = this.saveSystem.load();
         this.gameData = data ?? <GameData>this.settingsAsset.json;
-        console.log(this.gameData);
         this.setup();
     }
 

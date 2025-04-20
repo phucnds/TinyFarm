@@ -1,94 +1,144 @@
 import { Crop } from "../assets/Scripts/Game/Crop";
-import { CropConfigs, ItemType, PlantableConfig } from "../assets/Scripts/Game/Enums";
-
-const tomatoConfig = CropConfigs[ItemType.Tomato] as PlantableConfig;
+import { PlantableConfig, CropConfigs, ItemType } from "../assets/Scripts/Game/Enums";
+import { FarmTechnology } from "../assets/Scripts/Game/FarmTechnology";
 
 describe('Crop', () => {
-    let tomatoCrop: Crop;
+    let tomatoConfig: PlantableConfig;
+    let cowConfig: PlantableConfig;
 
-    beforeEach(() => {
-        // Tạo mới crop cho mỗi test case
-        tomatoCrop = new Crop(tomatoConfig);
+    beforeAll(() => {
+        tomatoConfig = CropConfigs[ItemType.Tomato]!;
+        cowConfig = CropConfigs[ItemType.Cow]!;
+        if (!tomatoConfig || !cowConfig) {
+            throw new Error("Crop configs not found for testing");
+        }
     });
 
-    it('Khởi tạo đúng thông số ban đầu', () => {
-        expect(tomatoCrop.getConfig()).toEqual(tomatoConfig);
-        expect(tomatoCrop.getCurrentYield()).toBe(0);
-        expect(tomatoCrop.getTimeToNextHarvest()).toBe(tomatoConfig.harvestInterval);
-        expect(tomatoCrop.canHarvest()).toBe(false);
-        expect(tomatoCrop.isReadyToHarvest()).toBe(false);
+    it('should initialize correctly', () => {
+        const crop = new Crop(tomatoConfig);
+        expect(crop.getConfig()).toBe(tomatoConfig);
+        expect(crop.getCurrentYield()).toBe(0);
+        expect(crop.ProducedItemCount).toBe(0); 
+        expect(crop.getTimeToNextHarvest()).toBe(tomatoConfig.harvestInterval);
+        expect(crop.getCanHarvest()).toBe(false);
     });
 
-    it('update giảm thời gian chờ thu hoạch', () => {
-        tomatoCrop.update(5); // Trôi qua 5 phút
-        expect(tomatoCrop.getTimeToNextHarvest()).toBe(tomatoConfig.harvestInterval - 5);
-        expect(tomatoCrop.isReadyToHarvest()).toBe(false);
+    it('should throw error if config is null', () => {
+        expect(() => new Crop(null as any)).toThrow("Config null.");
     });
 
-    it('update làm cây sẵn sàng thu hoạch khi hết thời gian', () => {
-        const ready = tomatoCrop.update(tomatoConfig.harvestInterval);
-        expect(ready).toBe(true);
-        expect(tomatoCrop.getTimeToNextHarvest()).toBe(0);
-        expect(tomatoCrop.isReadyToHarvest()).toBe(true);
+    it('should decrease timeToNextHarvest on update', () => {
+        const crop = new Crop(tomatoConfig);
+        crop.update(60); // 1 phút
+        expect(crop.getTimeToNextHarvest()).toBe(tomatoConfig.harvestInterval - 60);
+        expect(crop.ProducedItemCount).toBe(0);
+        expect(crop.getCanHarvest()).toBe(false);
     });
 
-    it('update không làm gì thêm khi đã sẵn sàng thu hoạch', () => {
-        tomatoCrop.update(tomatoConfig.harvestInterval); // Sẵn sàng
-        expect(tomatoCrop.getTimeToNextHarvest()).toBe(0);
-        tomatoCrop.update(5); // Trôi thêm 5 phút
-        expect(tomatoCrop.getTimeToNextHarvest()).toBe(0); // Vẫn là 0
-        expect(tomatoCrop.isReadyToHarvest()).toBe(true);
+    it('should produce an item when time reaches 0', () => {
+        const crop = new Crop(tomatoConfig);
+        const needsUpdate = crop.update(tomatoConfig.harvestInterval); // Đúng thời gian
+        expect(needsUpdate).toBe(true); 
+        expect(crop.getTimeToNextHarvest()).toBe(0); 
+        expect(crop.getCurrentYield()).toBe(1);
+        expect(crop.ProducedItemCount).toBe(1);
+        expect(crop.getCanHarvest()).toBe(false); // Chưa đạt maxYield
     });
 
-    it('harvest thành công khi đã sẵn sàng', () => {
-        tomatoCrop.update(tomatoConfig.harvestInterval); // Làm cho sẵn sàng
-        const harvestedItem = tomatoCrop.harvest();
-        expect(harvestedItem).toBe(ItemType.Tomato);
-        expect(tomatoCrop.getCurrentYield()).toBe(1);
-        expect(tomatoCrop.getTimeToNextHarvest()).toBe(tomatoConfig.harvestInterval); // Reset timer
-        expect(tomatoCrop.isReadyToHarvest()).toBe(false); // Không còn sẵn sàng nữa
-        expect(tomatoCrop.canHarvest()).toBe(false);
+    it('should produce multiple items if enough time passes', () => {
+        const crop = new Crop(tomatoConfig);
+        // Giả lập thời gian trôi qua đủ cho 3 lần thu hoạch
+        const timePassed = tomatoConfig.harvestInterval * 2.5;
+        const needsUpdate1 = crop.update(tomatoConfig.harvestInterval);
+        expect(needsUpdate1).toBe(true);
+        expect(crop.ProducedItemCount).toBe(1);
+
+        crop.resetTime();
+        const needsUpdate2 = crop.update(tomatoConfig.harvestInterval); 
+        expect(needsUpdate2).toBe(true);
+        expect(crop.ProducedItemCount).toBe(2); 
+
+        crop.resetTime();
+        const needsUpdate3 = crop.update(tomatoConfig.harvestInterval * 0.5); 
+        expect(needsUpdate3).toBe(false);
+        expect(crop.ProducedItemCount).toBe(2);
+        expect(crop.getTimeToNextHarvest()).toBeCloseTo(tomatoConfig.harvestInterval * 0.5);
     });
 
-    it('harvest thất bại khi chưa sẵn sàng', () => {
-        const harvestedItem = tomatoCrop.harvest();
-        expect(harvestedItem).toBeNull();
-        expect(tomatoCrop.getCurrentYield()).toBe(0);
+
+    it('should set canHarvest to true when maxYield is reached', () => {
+        const crop = new Crop(tomatoConfig);
+        // Giả lập sản xuất đến maxYield
+        (crop as any).currentYield = tomatoConfig.maxYield - 1;
+        (crop as any).producedItemCount = tomatoConfig.maxYield - 1;
+        crop.resetTime(); 
+
+        const needsUpdate = crop.update(tomatoConfig.harvestInterval);
+        expect(needsUpdate).toBe(true);
+        expect(crop.getCurrentYield()).toBe(tomatoConfig.maxYield);
+        
+        expect(crop.ProducedItemCount).toBe(tomatoConfig.maxYield);
+        expect(crop.getCanHarvest()).toBe(true);
+        expect(crop.getTimeToNextHarvest()).toBe(0); 
     });
 
-    it('harvest lần cuối cùng và đánh dấu isDepleted', () => {
-        // Giả lập thu hoạch gần hết
-        // Dùng cách truy cập trực tiếp để test (không nên làm trong code thường)
-        (tomatoCrop as any).currentYield = tomatoConfig.maxYield - 1;
-        tomatoCrop.update(tomatoConfig.harvestInterval); // Sẵn sàng cho lần cuối
-
-        const harvestedItem = tomatoCrop.harvest();
-        expect(harvestedItem).toBe(ItemType.Tomato);
-        expect(tomatoCrop.getCurrentYield()).toBe(tomatoConfig.maxYield);
-        expect(tomatoCrop.canHarvest()).toBe(true);
-        // Thời gian không được reset nữa vì đã hết
-        expect(tomatoCrop.getTimeToNextHarvest()).toBe(0); // Vẫn là 0 vì vừa thu hoạch xong
-        expect(tomatoCrop.isReadyToHarvest()).toBe(false); // Không thể thu hoạch nữa
-
-        // Thử harvest lần nữa sau khi depleted
-        const harvestedAgain = tomatoCrop.harvest();
-        expect(harvestedAgain).toBeNull();
-        expect(tomatoCrop.getCurrentYield()).toBe(tomatoConfig.maxYield); // yield không tăng
+    it('should return true from update if already canHarvest', () => {
+        const crop = new Crop(tomatoConfig);
+        (crop as any).canHarvest = true;
+        (crop as any).timeToNextHarvest = 0;
+        const needsUpdate = crop.update(100); 
+        expect(needsUpdate).toBe(true);
+        expect(crop.getTimeToNextHarvest()).toBe(0); 
     });
 
-    it('update không làm gì khi đã isDepleted', () => {
-        (tomatoCrop as any).currentYield = tomatoConfig.maxYield;
-        (tomatoCrop as any).isDepleted = true;
-        (tomatoCrop as any).timeToNextHarvest = 0; // Giả sử vừa thu hoạch xong
+    it('should reset producedItemCount on harvest', () => {
+        const crop = new Crop(tomatoConfig);
+       
+        (crop as any).producedItemCount = 5;
+        (crop as any).currentYield = 5;
 
-        const ready = tomatoCrop.update(100); // Trôi qua 100 phút
-        expect(ready).toBe(false);
-        expect(tomatoCrop.getTimeToNextHarvest()).toBe(0); // Thời gian không đổi
-        expect(tomatoCrop.isReadyToHarvest()).toBe(false); // Không thể sẵn sàng nữa
+        const harvestedAmount = crop.harvest();
+        expect(harvestedAmount).toBe(5);
+        expect(crop.ProducedItemCount).toBe(0); 
+        
+        expect(crop.getCurrentYield()).toBe(5);
     });
 
-    it('ném lỗi nếu config là null hoặc undefined', () => {
-        expect(() => new Crop(null as any)).toThrow("Config không được phép null hoặc undefined");
-        expect(() => new Crop(undefined as any)).toThrow("Config không được phép null hoặc undefined");
+    it('should reset timeToNextHarvest correctly', () => {
+        const crop = new Crop(tomatoConfig);
+        crop.update(tomatoConfig.harvestInterval); 
+        expect(crop.getTimeToNextHarvest()).toBe(0);
+        crop.resetTime();
+        expect(crop.getTimeToNextHarvest()).toBe(tomatoConfig.harvestInterval);
+    });
+})
+
+
+describe('FarmTechnology', () => {
+    it('should initialize correctly', () => {
+        const tech = new FarmTechnology(1, 500, 0.1);
+        expect(tech.level).toBe(1);
+        expect(tech.upgradeCost).toBe(500);
+        expect(tech.multiply).toBe(0.1);
+    });
+
+    it('should calculate production multiplier correctly', () => {
+        const tech1 = new FarmTechnology(1, 500, 0.1);
+        expect(tech1.getProductionMultiplier()).toBeCloseTo(1.1); // Level 1 -> 1 + 1 * 0.1 = 1.1
+
+        const tech5 = new FarmTechnology(5, 500, 0.1);
+        expect(tech5.getProductionMultiplier()).toBeCloseTo(1.5); // Level 5 -> 1 + 5 * 0.1 = 1.5
+    });
+
+    it('should increase level on upgrade', () => {
+        const tech = new FarmTechnology(2, 500, 0.1);
+        tech.upgrade();
+        expect(tech.level).toBe(3);
+    });
+
+    it('should not change upgradeCost on upgrade (based on commented code)', () => {
+        const tech = new FarmTechnology(2, 500, 0.1);
+        tech.upgrade();
+        expect(tech.upgradeCost).toBe(500);
     });
 });

@@ -1,13 +1,12 @@
 import { _decorator, Component, Node } from 'cc';
 import { Inventory } from '../Game/Inventory';
-import { CropConfigs, ItemType, PlantableConfig, ShopItemConfigs } from '../Game/Enums';
+import { CropConfigs, CropData, ItemType, PlantableConfig, ShopItemConfigs } from '../Game/Enums';
 import { Signal } from '../Services/EventSystem/Signal';
 import { InventorySettings } from '../Data/GameSettings';
 const { ccclass, property } = _decorator;
 
 @ccclass('InventoryManager')
 export class InventoryManager extends Component {
-
 
     private static instance: InventoryManager;
 
@@ -75,7 +74,7 @@ export class InventoryManager extends Component {
     }
 
     public loadFrom(data: InventorySettings): void {
-        this.inventory.setItems(data.inventory)
+        this.inventory.setItems(data.inventory);
     }
     public saveTo(data: InventorySettings): void {
         data.inventory = this.inventory.getItemDatas();

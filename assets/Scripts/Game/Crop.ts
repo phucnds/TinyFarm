@@ -1,3 +1,4 @@
+import { math } from "cc";
 import { PlantableConfig, ItemType, CropSaveData, getPlantableConfig } from "./Enums";
 
 export class Crop {
@@ -5,12 +6,16 @@ export class Crop {
     private producedItemCount = 0;
     private timeToNextHarvest: number;
 
+    private canHarvest = false;
+
     constructor(private config: PlantableConfig) {
         if (!config) throw new Error("Config null.");
         this.timeToNextHarvest = config.harvestInterval;
     }
 
     public update(deltaTimeMinutes: number): boolean {
+        if (this.canHarvest) return true;
+
         this.timeToNextHarvest -= deltaTimeMinutes;
         if (this.timeToNextHarvest < 0) {
             this.timeToNextHarvest = 0;
@@ -23,6 +28,9 @@ export class Crop {
     private produce(): void {
         this.currentYield++;
         this.producedItemCount++;
+
+        if (this.currentYield >= this.config.maxYield)
+            this.canHarvest = true;
     }
 
     public harvest(): number {
@@ -72,6 +80,26 @@ export class Crop {
         this.timeToNextHarvest = data.timeToNextHarvest;
 
         const now = Date.now();
-        console.log(now - data.lastTimeSince);
+        const elapsedSeconds = (now - data.lastTimeSince) / 1000;
+
+        let totalTime = this.timeToNextHarvest + elapsedSeconds;
+
+        const harvestCount = Math.floor(totalTime / this.config.harvestInterval);
+
+        if (harvestCount > 0) {
+            this.currentYield += harvestCount;
+            this.producedItemCount += harvestCount;
+
+            this.currentYield = math.clamp(this.currentYield, 0, this.config.maxYield);
+            this.producedItemCount = math.clamp(this.producedItemCount, 0, this.config.maxYield);
+
+            if (this.currentYield >= this.config.maxYield) {
+                this.canHarvest = true;
+                this.timeToNextHarvest = 0;
+                return;
+            }
+        }
+
+        this.timeToNextHarvest = totalTime % this.config.harvestInterval;
     }
 }

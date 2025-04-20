@@ -6,7 +6,7 @@
   },
   "scripts": {
     "test": "jest",
-    "regenerate-settings": "ts-node utils/regenerateGameSettings.ts assets/Data/GameSettings.json"
+    "regenerate-settings": "ts-node utils/regenerateGamesSettings.ts assets/Data/GameSettings.json"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

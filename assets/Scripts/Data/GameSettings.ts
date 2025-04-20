@@ -1,6 +1,4 @@
-import { CropConfigs, CropData, FarmPlotSaveData, ItemData, ItemType, PlantableConfig } from "../Game/Enums";
-import { FarmPlot } from "../Game/FarmPlot";
-import { InventoryItem } from "../Game/InventoryItem";
+import { CropData, FarmPlotSaveData, ItemData, ItemType, PlantableConfig } from "../Game/Enums";
 
 export interface ISavable<T> {
     loadFrom(data: T): void;
