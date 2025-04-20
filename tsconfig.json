@@ -1,0 +1,22 @@
+{
+  /* Base configuration. Do not edit this field. */
+  "extends": "./temp/tsconfig.cocos.json",
+
+  /* Add your custom configuration here. */
+  "compilerOptions": {
+    "strict": false,
+    "target": "ES2017",
+    "lib": [
+      "ES2017",
+      "DOM"
+    ],
+    "module": "CommonJS",
+    "allowSyntheticDefaultImports": true,
+    "types": [
+      "jest",
+      "node"
+    ],
+    "strictNullChecks": false,
+    "moduleResolution": "node",
+  }
+}
